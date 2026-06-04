@@ -3,13 +3,921 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Github Page</title>
+    <title>Sightline Privacy Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #eee;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            color: #4ecdc4;
+            text-shadow: 0 2px 10px rgba(78, 205, 196, 0.3);
+        }
+
+        .subtitle {
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        #privacyCanvas {
+            display: block;
+            background: #0a0a15;
+            cursor: crosshair;
+        }
+
+        .dashboard {
+            background: rgba(30, 30, 50, 0.95);
+            border-radius: 12px;
+            padding: 25px;
+            min-width: 280px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(78, 205, 196, 0.2);
+        }
+
+        .metric {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+        }
+
+        .metric-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4ecdc4;
+        }
+
+        .metric-value.exposed {
+            color: #ff6b6b;
+        }
+
+        .metric-value.partial {
+            color: #ffd93d;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .control-value {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #2a2a4a;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(78, 205, 196, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4ecdc4;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(78, 205, 196, 0.1);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            border-left: 3px solid #4ecdc4;
+        }
+
+        .instructions h3 {
+            color: #4ecdc4;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+        .instructions li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #4ecdc4;
+        }
+
+        .legend {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .legend-color.protected {
+            background: #4ecdc4;
+        }
+
+        .legend-color.exposed {
+            background: #ff6b6b;
+        }
+
+        .legend-color.wall {
+            background: #666;
+        }
+
+        .legend-color.livingWall {
+            background: #2ecc71;
+        }
+    </style>
 </head>
 <body>
-    <h1>
-        This is my first Github page!
-    </h1>
+    <h1>👁️ Sightline Privacy Simulator</h1>
+    <p class="subtitle">Interactive restroom layout privacy analysis tool</p>
 
-    Hello, world
+    <div class="container">
+        <div class="canvas-wrapper">
+            <canvas id="privacyCanvas" width="800" height="600"></canvas>
+        </div>
+
+        <div class="dashboard">
+            <div class="metric">
+                <div class="metric-label">Privacy Protection Level</div>
+                <div class="metric-value" id="privacyLevel">0%</div>
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Living Wall Length</span>
+                    <span class="control-value" id="lengthValue">100px</span>
+                </div>
+                <input type="range" id="wallLength" min="20" max="200" value="100">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Living Wall Rotation</span>
+                    <span class="control-value" id="rotationValue">90°</span>
+                </div>
+                <input type="range" id="wallRotation" min="0" max="180" value="90">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Wall Position X</span>
+                    <span class="control-value" id="posXValue">550</span>
+                </div>
+                <input type="range" id="wallPosX" min="50" max="750" value="550">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">
+                    <span>Wall Position Y</span>
+                    <span class="control-value" id="posYValue">320</span>
+                </div>
+                <input type="range" id="wallPosY" min="50" max="550" value="320">
+            </div>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color protected"></div>
+                    <span>Protected</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color exposed"></div>
+                    <span>Exposed</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color wall"></div>
+                    <span>Wall</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color livingWall"></div>
+                    <span>Living Wall</span>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3>How to Use</h3>
+                <ul>
+                    <li>Drag the <strong>Observer</strong> (blue circle) in the hallway to change viewing position</li>
+                    <li>Drag the <strong>Living Wall</strong> (green bar) to reposition it</li>
+                    <li>Use sliders to adjust wall length, rotation, and position</li>
+                    <li>Watch how sightlines change in real-time</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // SIGHTLINE PRIVACY SIMULATOR
+        // Interactive 2D Raycasting for Restroom Privacy
+        // ============================================
+
+        const canvas = document.getElementById('privacyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const privacyLevelDisplay = document.getElementById('privacyLevel');
+        const wallLengthSlider = document.getElementById('wallLength');
+        const wallRotationSlider = document.getElementById('wallRotation');
+        const wallPosXSlider = document.getElementById('wallPosX');
+        const wallPosYSlider = document.getElementById('wallPosY');
+        const lengthValueDisplay = document.getElementById('lengthValue');
+        const rotationValueDisplay = document.getElementById('rotationValue');
+        const posXValueDisplay = document.getElementById('posXValue');
+        const posYValueDisplay = document.getElementById('posYValue');
+
+        // ============================================
+        // STATE & CONFIGURATION
+        // ============================================
+
+        const state = {
+            // Observer (hallway person)
+            observer: { x: 700, y: 350 },
+
+            // Living Wall (privacy screen)
+            livingWall: {
+                x: 550,
+                y: 320,
+                length: 100,
+                rotation: 90 // degrees
+            },
+
+            // Dragging state
+            isDraggingObserver: false,
+            isDraggingWall: false,
+            dragOffset: { x: 0, y: 0 },
+
+            // Privacy targets
+            targets: [
+                // Urinal targets (bottom left)
+                { x: 160, y: 480, type: 'urinal', label: 'U1' },
+                { x: 230, y: 480, type: 'urinal', label: 'U2' },
+                { x: 300, y: 480, type: 'urinal', label: 'U3' },
+                { x: 370, y: 480, type: 'urinal', label: 'U4' },
+                // Stall door targets (top)
+                { x: 150, y: 220, type: 'stall', label: 'S1' },
+                { x: 250, y: 220, type: 'stall', label: 'S2' },
+                { x: 350, y: 220, type: 'stall', label: 'S3' },
+                { x: 450, y: 220, type: 'stall', label: 'S4' }
+            ],
+
+            // Wall segments (blocking sightlines)
+            walls: [
+                // Main room perimeter
+                { x1: 100, y1: 100, x2: 600, y2: 100, type: 'wall' },     // Top
+                { x1: 100, y1: 100, x2: 100, y2: 500, type: 'wall' },     // Left
+                { x1: 100, y1: 500, x2: 600, y2: 500, type: 'wall' },     // Bottom
+                { x1: 600, y1: 100, x2: 600, y2: 250, type: 'wall' },     // Right top
+                { x1: 600, y1: 400, x2: 600, y2: 500, type: 'wall' }      // Right bottom (doorway gap: 250-400)
+            ]
+        };
+
+        // ============================================
+        // GEOMETRY UTILITIES
+        // ============================================
+
+        /**
+         * Calculate the endpoints of the living wall based on center position, length, and rotation
+         */
+        function getLivingWallEndpoints() {
+            const { x, y, length, rotation } = state.livingWall;
+            const angleRad = (rotation * Math.PI) / 180;
+            const halfLength = length / 2;
+
+            return {
+                x1: x - halfLength * Math.cos(angleRad),
+                y1: y - halfLength * Math.sin(angleRad),
+                x2: x + halfLength * Math.cos(angleRad),
+                y2: y + halfLength * Math.sin(angleRad)
+            };
+        }
+
+        /**
+         * Line-line intersection algorithm
+         * Returns intersection point if lines intersect, null otherwise
+         * Uses parametric equation method
+         */
+        function lineLineIntersection(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+
+            // Lines are parallel
+            if (Math.abs(denom) < 0.0001) return null;
+
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            const u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+
+            // Check if intersection is within both line segments
+            if (t >= 0 && t <= 1 && u >= 0 && u <= 1) {
+                return {
+                    x: x1 + t * (x2 - x1),
+                    y: y1 + t * (y2 - y1),
+                    distance: t * Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+                };
+            }
+
+            return null;
+        }
+
+        /**
+         * Calculate distance between two points
+         */
+        function distance(x1, y1, x2, y2) {
+            return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        }
+
+        /**
+         * Check if a point is inside a circle
+         */
+        function pointInCircle(px, py, cx, cy, radius) {
+            return distance(px, py, cx, cy) <= radius;
+        }
+
+        // ============================================
+        // SIGHTLINE ANALYSIS
+        // ============================================
+
+        /**
+         * Check if a sightline from observer to target is blocked by any wall
+         * Returns: { blocked: boolean, intersection: {x, y} | null }
+         */
+        function checkSightline(target) {
+            const { x: obsX, y: obsY } = state.observer;
+            const { x: tgtX, y: tgtY } = target;
+
+            let closestIntersection = null;
+            let minDistance = Infinity;
+
+            // Check against all solid walls
+            for (const wall of state.walls) {
+                const intersection = lineLineIntersection(
+                    obsX, obsY, tgtX, tgtY,
+                    wall.x1, wall.y1, wall.x2, wall.y2
+                );
+
+                if (intersection && intersection.distance < minDistance) {
+                    minDistance = intersection.distance;
+                    closestIntersection = intersection;
+                }
+            }
+
+            // Check against living wall
+            const lw = getLivingWallEndpoints();
+            const lwIntersection = lineLineIntersection(
+                obsX, obsY, tgtX, tgtY,
+                lw.x1, lw.y1, lw.x2, lw.y2
+            );
+
+            if (lwIntersection && lwIntersection.distance < minDistance) {
+                minDistance = lwIntersection.distance;
+                closestIntersection = lwIntersection;
+            }
+
+            // Target is protected if a wall intersects before reaching the target
+            const targetDistance = distance(obsX, obsY, tgtX, tgtY);
+
+            return {
+                blocked: closestIntersection !== null && closestIntersection.distance < targetDistance - 1,
+                intersection: closestIntersection
+            };
+        }
+
+        /**
+         * Calculate privacy protection percentage
+         */
+        function calculatePrivacyLevel() {
+            let protectedCount = 0;
+
+            for (const target of state.targets) {
+                const result = checkSightline(target);
+                if (result.blocked) {
+                    protectedCount++;
+                }
+            }
+
+            return Math.round((protectedCount / state.targets.length) * 100);
+        }
+
+        // ============================================
+        // RENDERING
+        // ============================================
+
+        /**
+         * Draw a single wall segment
+         */
+        function drawWall(wall, color = '#666', width = 4, style = 'solid') {
+            ctx.beginPath();
+            ctx.moveTo(wall.x1, wall.y1);
+            ctx.lineTo(wall.x2, wall.y2);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            if (style === 'dashed') {
+                ctx.setLineDash([5, 5]);
+            } else {
+                ctx.setLineDash([]);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        /**
+         * Draw the restroom layout
+         */
+        function drawLayout() {
+            // Draw room floor
+            ctx.fillStyle = 'rgba(30, 30, 45, 0.5)';
+            ctx.fillRect(100, 100, 500, 400);
+
+            // Draw hallway floor
+            ctx.fillStyle = 'rgba(25, 25, 40, 0.3)';
+            ctx.fillRect(600, 100, 200, 400);
+
+            // Draw solid walls
+            for (const wall of state.walls) {
+                drawWall(wall, '#555', 6);
+            }
+
+            // Draw wall accents (3D effect)
+            for (const wall of state.walls) {
+                drawWall({ ...wall, x1: wall.x1 + 2, y1: wall.y1 + 2, x2: wall.x2 + 2, y2: wall.y2 + 2 }, '#333', 2);
+            }
+
+            // Draw toilet stall partitions (visual only)
+            ctx.strokeStyle = '#777';
+            ctx.lineWidth = 2;
+            const stallX = [200, 300, 400, 500];
+            for (const x of stallX) {
+                ctx.beginPath();
+                ctx.moveTo(x, 100);
+                ctx.lineTo(x, 220);
+                ctx.stroke();
+            }
+
+            // Draw stall doors
+            for (const target of state.targets.filter(t => t.type === 'stall')) {
+                ctx.fillStyle = '#666';
+                ctx.fillRect(target.x - 15, target.y - 5, 30, 10);
+            }
+
+            // Draw urinals
+            const urinalPositions = [
+                { x: 160, y: 480 }, { x: 230, y: 480 },
+                { x: 300, y: 480 }, { x: 370, y: 480 }
+            ];
+            for (const pos of urinalPositions) {
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 15, 0, Math.PI * 2);
+                ctx.fillStyle = '#555';
+                ctx.fill();
+                ctx.strokeStyle = '#777';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+
+            // Draw sinks (vanity)
+            ctx.fillStyle = '#666';
+            ctx.fillRect(480, 480, 100, 20);
+            ctx.strokeStyle = '#777';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(480, 480, 100, 20);
+
+            // Draw faucet dots
+            for (let i = 0; i < 3; i++) {
+                ctx.beginPath();
+                ctx.arc(500 + i * 30, 490, 3, 0, Math.PI * 2);
+                ctx.fillStyle = '#888';
+                ctx.fill();
+            }
+        }
+
+        /**
+         * Draw the living wall (privacy screen)
+         */
+        function drawLivingWall() {
+            const endpoints = getLivingWallEndpoints();
+
+            // Shadow
+            ctx.beginPath();
+            ctx.moveTo(endpoints.x1 + 3, endpoints.y1 + 3);
+            ctx.lineTo(endpoints.x2 + 3, endpoints.y2 + 3);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 14;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Main wall (green privacy screen)
+            ctx.beginPath();
+            ctx.moveTo(endpoints.x1, endpoints.y1);
+            ctx.lineTo(endpoints.x2, endpoints.y2);
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 12;
+            ctx.stroke();
+
+            // Highlight
+            ctx.beginPath();
+            ctx.moveTo(endpoints.x1, endpoints.y1);
+            ctx.lineTo(endpoints.x2, endpoints.y2);
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+
+            // Center handle
+            ctx.beginPath();
+            ctx.arc(state.livingWall.x, state.livingWall.y, 8, 0, Math.PI * 2);
+            ctx.fillStyle = '#1e8449';
+            ctx.fill();
+            ctx.strokeStyle = '#2ecc71';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Reset line cap
+            ctx.lineCap = 'butt';
+        }
+
+        /**
+         * Draw sightlines from observer to all targets
+         */
+        function drawSightlines() {
+            const { x: obsX, y: obsY } = state.observer;
+
+            for (const target of state.targets) {
+                const result = checkSightline(target);
+
+                if (result.blocked) {
+                    // Protected - draw faint green dashed line to intersection
+                    ctx.beginPath();
+                    ctx.moveTo(obsX, obsY);
+                    ctx.lineTo(result.intersection.x, result.intersection.y);
+                    ctx.strokeStyle = 'rgba(78, 205, 196, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 4]);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Draw small dot at intersection
+                    ctx.beginPath();
+                    ctx.arc(result.intersection.x, result.intersection.y, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(78, 205, 196, 0.8)';
+                    ctx.fill();
+                } else {
+                    // Exposed - draw bold red line to target
+                    ctx.beginPath();
+                    ctx.moveTo(obsX, obsY);
+                    ctx.lineTo(target.x, target.y);
+                    ctx.strokeStyle = 'rgba(255, 107, 107, 0.8)';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        /**
+         * Draw privacy targets (urinals and stalls)
+         */
+        function drawTargets() {
+            for (const target of state.targets) {
+                const result = checkSightline(target);
+                const isProtected = result.blocked;
+
+                // Target dot
+                ctx.beginPath();
+                ctx.arc(target.x, target.y, isProtected ? 8 : 12, 0, Math.PI * 2);
+
+                if (isProtected) {
+                    ctx.fillStyle = '#4ecdc4';
+                    ctx.strokeStyle = '#2a9d8f';
+                } else {
+                    ctx.fillStyle = '#ff6b6b';
+                    ctx.strokeStyle = '#c92a2a';
+                }
+
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Label
+                ctx.fillStyle = isProtected ? '#4ecdc4' : '#ff6b6b';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(target.label, target.x, target.y - 20);
+            }
+        }
+
+        /**
+         * Draw the observer (person in hallway)
+         */
+        function drawObserver() {
+            const { x, y } = state.observer;
+
+            // Shadow
+            ctx.beginPath();
+            ctx.arc(x + 2, y + 2, 18, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fill();
+
+            // Main body
+            ctx.beginPath();
+            ctx.arc(x, y, 16, 0, Math.PI * 2);
+            ctx.fillStyle = '#3498db';
+            ctx.fill();
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Eye icon (simple)
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(x, y - 2, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#1a1a2e';
+            ctx.beginPath();
+            ctx.arc(x, y - 2, 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Label
+            ctx.fillStyle = '#3498db';
+            ctx.font = 'bold 11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('OBSERVER', x, y + 30);
+        }
+
+        /**
+         * Main render function
+         */
+        function render() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid (subtle background)
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw scene elements
+            drawLayout();
+            drawLivingWall();
+            drawSightlines();
+            drawTargets();
+            drawObserver();
+
+            // Update privacy level display
+            const privacyLevel = calculatePrivacyLevel();
+            privacyLevelDisplay.textContent = privacyLevel + '%';
+
+            // Update color based on protection level
+            privacyLevelDisplay.className = 'metric-value';
+            if (privacyLevel < 50) {
+                privacyLevelDisplay.classList.add('exposed');
+            } else if (privacyLevel < 80) {
+                privacyLevelDisplay.classList.add('partial');
+            }
+
+            // Continue animation loop
+            requestAnimationFrame(render);
+        }
+
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+
+        /**
+         * Get mouse position relative to canvas
+         */
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+            };
+        }
+
+        /**
+         * Handle mouse down event
+         */
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getMousePos(e);
+
+            // Check if clicking on observer
+            if (pointInCircle(pos.x, pos.y, state.observer.x, state.observer.y, 20)) {
+                state.isDraggingObserver = true;
+                state.dragOffset = {
+                    x: pos.x - state.observer.x,
+                    y: pos.y - state.observer.y
+                };
+                return;
+            }
+
+            // Check if clicking on living wall
+            const lw = getLivingWallEndpoints();
+            const wallLength = distance(lw.x1, lw.y1, lw.x2, lw.y2);
+            // Simplified hit detection - check distance to center
+            if (pointInCircle(pos.x, pos.y, state.livingWall.x, state.livingWall.y, wallLength / 2 + 10)) {
+                state.isDraggingWall = true;
+                state.dragOffset = {
+                    x: pos.x - state.livingWall.x,
+                    y: pos.y - state.livingWall.y
+                };
+                return;
+            }
+        });
+
+        /**
+         * Handle mouse move event
+         */
+        canvas.addEventListener('mousemove', (e) => {
+            const pos = getMousePos(e);
+
+            // Update cursor
+            if (pointInCircle(pos.x, pos.y, state.observer.x, state.observer.y, 20)) {
+                canvas.style.cursor = 'grab';
+            } else {
+                canvas.style.cursor = 'crosshair';
+            }
+
+            // Drag observer
+            if (state.isDraggingObserver) {
+                let newX = pos.x - state.dragOffset.x;
+                let newY = pos.y - state.dragOffset.y;
+
+                // Constrain to hallway area
+                newX = Math.max(610, Math.min(780, newX));
+                newY = Math.max(100, Math.min(550, newY));
+
+                state.observer.x = newX;
+                state.observer.y = newY;
+                canvas.style.cursor = 'grabbing';
+            }
+
+            // Drag living wall
+            if (state.isDraggingWall) {
+                state.livingWall.x = pos.x - state.dragOffset.x;
+                state.livingWall.y = pos.y - state.dragOffset.y;
+                canvas.style.cursor = 'grabbing';
+                // Update slider displays to match dragged position
+                updateSliderDisplays();
+            }
+        });
+
+        /**
+         * Handle mouse up event
+         */
+        canvas.addEventListener('mouseup', () => {
+            state.isDraggingObserver = false;
+            state.isDraggingWall = false;
+        });
+
+        /**
+         * Handle mouse leave event
+         */
+        canvas.addEventListener('mouseleave', () => {
+            state.isDraggingObserver = false;
+            state.isDraggingWall = false;
+        });
+
+        // ============================================
+        // UI CONTROLS
+        // ============================================
+
+        wallLengthSlider.addEventListener('input', (e) => {
+            state.livingWall.length = parseInt(e.target.value);
+            lengthValueDisplay.textContent = e.target.value + 'px';
+        });
+
+        wallRotationSlider.addEventListener('input', (e) => {
+            state.livingWall.rotation = parseInt(e.target.value);
+            rotationValueDisplay.textContent = e.target.value + '°';
+        });
+
+        wallPosXSlider.addEventListener('input', (e) => {
+            state.livingWall.x = parseInt(e.target.value);
+            posXValueDisplay.textContent = e.target.value;
+        });
+
+        wallPosYSlider.addEventListener('input', (e) => {
+            state.livingWall.y = parseInt(e.target.value);
+            posYValueDisplay.textContent = e.target.value;
+        });
+
+        /**
+         * Update slider displays when dragging
+         */
+        function updateSliderDisplays() {
+            wallPosXSlider.value = Math.round(state.livingWall.x);
+            wallPosYSlider.value = Math.round(state.livingWall.y);
+            posXValueDisplay.textContent = Math.round(state.livingWall.x);
+            posYValueDisplay.textContent = Math.round(state.livingWall.y);
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        // Start the render loop
+        render();
+
+        // Log initialization
+        console.log('👁️ Sightline Privacy Simulator initialized');
+        console.log('   - Observer position:', state.observer);
+        console.log('   - Living wall:', state.livingWall);
+        console.log('   - Total targets:', state.targets.length);
+    </script>
 </body>
 </html>
