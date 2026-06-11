@@ -259,8 +259,8 @@
         const plantCountDisplay = document.getElementById('plantCount');
 
         const state = {
-            // Observer starts in the hallway
-            observer: { x: 720, y: 360 },
+            // Observer starts in the new hallway location
+            observer: { x: 720, y: 315 },
 
             plants: [], 
             isDraggingObserver: false,
@@ -268,32 +268,35 @@
             draggedPlantIndex: -1,
             dragOffset: { x: 0, y: 0 },
 
-            // Only tracking urinals per requirement
+            // Tracking urinals per the sketch
             targets: [
-                { x: 160, y: 480, type: 'urinal', label: 'U1' },
-                { x: 240, y: 480, type: 'urinal', label: 'U2' },
-                { x: 320, y: 480, type: 'urinal', label: 'U3' },
-                { x: 400, y: 480, type: 'urinal', label: 'U4' }
+                { x: 210, y: 480, type: 'urinal', label: 'U1' },
+                { x: 290, y: 480, type: 'urinal', label: 'U2' },
+                { x: 370, y: 480, type: 'urinal', label: 'U3' },
+                { x: 450, y: 480, type: 'urinal', label: 'U4' }
             ],
 
-            // Structural walls matching the hand-drawn sketch
+            // Structural walls matched to the sketch layout
             walls: [
                 // Main room perimeter
-                { x1: 100, y1: 100, x2: 600, y2: 100, type: 'wall' },     // Top wall
+                { x1: 100, y1: 100, x2: 510, y2: 100, type: 'wall' },     // Top wall
                 { x1: 100, y1: 100, x2: 100, y2: 500, type: 'wall' },     // Left wall
-                { x1: 100, y1: 500, x2: 600, y2: 500, type: 'wall' },     // Bottom wall
+                { x1: 100, y1: 500, x2: 650, y2: 500, type: 'wall' },     // Bottom wall
                 
                 // Entrance framing
-                { x1: 600, y1: 100, x2: 600, y2: 300, type: 'wall' },     // Right wall top
-                { x1: 600, y1: 420, x2: 600, y2: 500, type: 'wall' },     // Right wall bottom (Door gap 300-420)
+                { x1: 510, y1: 100, x2: 510, y2: 250, type: 'wall' },     // Right wall top
+                { x1: 510, y1: 250, x2: 650, y2: 250, type: 'wall' },     // Hallway top horizontal
+                { x1: 510, y1: 380, x2: 510, y2: 500, type: 'wall' },     // Right wall bottom (right of sinks)
 
                 // Fixed partition separating sinks and urinals
-                // Purposely positioned where it fails to cover the furthest sightline
-                { x1: 440, y1: 420, x2: 440, y2: 500, type: 'wall' }      
+                { x1: 510, y1: 380, x2: 510, y2: 500, type: 'wall' } , 
+                { x1: 650, y1: 380, x2: 650, y2: 500, type: 'wall' } ,
+                { x1: 510, y1: 250, x2: 510, y2: 280, type: 'wall' } ,
+                { x1: 650, y1: 250, x2: 650, y2: 280, type: 'wall' }
             ]
         };
 
-        const PLANT_RADIUS = 25;
+        const PLANT_RADIUS = 15;
         let nextPlantId = 1;
 
         // Math Utilities
@@ -412,11 +415,11 @@
         function drawLayout() {
             // Floor
             ctx.fillStyle = 'rgba(30, 30, 45, 0.5)';
-            ctx.fillRect(100, 100, 500, 400);
+            ctx.fillRect(100, 100, 550, 400);
 
             // Hallway floor
             ctx.fillStyle = 'rgba(25, 25, 40, 0.3)';
-            ctx.fillRect(600, 300, 200, 120);
+            ctx.fillRect(650, 250, 150, 130);
 
             // Walls and shadows
             for (const wall of state.walls) {
@@ -425,47 +428,41 @@
             }
 
             // -----------------------------------------
-            // Architectural specifics from the sketch
+            // Architectural specifics matching the new sketch
             // -----------------------------------------
             
-            // Top Stalls (Visual only)
+            // Top Stalls (Visual only, L-shapes matching the sketch)
             ctx.strokeStyle = '#777';
             ctx.lineWidth = 3;
-            const stallDividers = [230, 350, 470]; 
-            for (const x of stallDividers) {
-                ctx.beginPath(); ctx.moveTo(x, 100); ctx.lineTo(x, 260); ctx.stroke();
+            const stalls = [200, 305, 410]; 
+            for (const x of stalls) {
+                ctx.beginPath();
+                ctx.moveTo(x, 100);
+                ctx.lineTo(x, 280);
+                ctx.lineTo(x + 50, 280);
+                ctx.stroke();
             }
-            // Stall Doors
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(230, 260); ctx.lineTo(310, 260); // Stall 1 door
-            ctx.moveTo(350, 260); ctx.lineTo(430, 260); // Stall 2 door
-            ctx.moveTo(470, 260); ctx.lineTo(550, 260); // Stall 3 door
-            ctx.stroke();
             
-            // Top Left Corner Sink
-            ctx.fillStyle = '#666';
-            ctx.fillRect(100, 100, 40, 50);
-            ctx.fillStyle = '#444';
-            ctx.beginPath(); ctx.arc(120, 125, 12, 0, Math.PI*2); ctx.fill();
-
-            // Urinal Divider Plates
+            // Urinal Divider Plates (ticks)
             ctx.strokeStyle = '#777';
             ctx.lineWidth = 2;
-            const uDividers = [200, 280, 360];
+            const uDividers = [170, 250, 330, 410];
             for (const x of uDividers) {
-                ctx.beginPath(); ctx.moveTo(x, 475); ctx.lineTo(x, 500); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, 470);
+                ctx.lineTo(x, 500);
+                ctx.stroke();
             }
 
-            // Bottom Right Sinks (Vanity)
+            // Bottom Right Sinks (between partitions)
             ctx.fillStyle = '#666';
-            ctx.fillRect(470, 460, 110, 40);
+            ctx.fillRect(530, 460, 100, 40);
             ctx.strokeStyle = '#777';
-            ctx.strokeRect(470, 460, 110, 40);
+            ctx.strokeRect(530, 460, 100, 40);
             // Sink basins
             ctx.fillStyle = '#444';
-            ctx.beginPath(); ctx.ellipse(500, 480, 15, 10, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(550, 480, 15, 10, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(555, 480, 15, 10, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(605, 480, 15, 10, 0, 0, Math.PI * 2); ctx.fill();
         }
 
         function drawPlants() {
@@ -674,8 +671,8 @@
                 let newX = pos.x - state.dragOffset.x;
                 let newY = pos.y - state.dragOffset.y;
                 
-                // Constrain observer to the canvas area, keeping them outside the main room wall
-                newX = Math.max(620, Math.min(canvas.width - 20, newX));
+                // Constrain observer to the canvas area, keeping them in the hallway area roughly
+                newX = Math.max(670, Math.min(canvas.width - 20, newX));
                 newY = Math.max(20, Math.min(canvas.height - 20, newY));
 
                 state.observer.x = newX;
@@ -716,8 +713,8 @@
 
         addPlantBtn.addEventListener('click', () => {
             state.plants.push({
-                x: 460 + (Math.random() - 0.5) * 50, // Drop new plants near the problem area
-                y: 380 + (Math.random() - 0.5) * 50,
+                x: 600 + (Math.random() - 0.5) * 50, // Drop new plants near the problem area
+                y: 350 + (Math.random() - 0.5) * 50,
                 radius: PLANT_RADIUS,
                 id: nextPlantId++
             });
