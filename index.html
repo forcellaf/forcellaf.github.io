@@ -389,7 +389,7 @@
             return {
                 blocked: closestIntersection !== null && closestIntersection.distance < targetDistance - 1,
                 intersection: closestIntersection
-            };
+            }
         }
 
         function calculatePrivacyLevel() {
@@ -674,9 +674,9 @@
                 let newX = pos.x - state.dragOffset.x;
                 let newY = pos.y - state.dragOffset.y;
                 
-                // Constrain observer strictly to the hallway
-                newX = Math.max(620, Math.min(780, newX));
-                newY = Math.max(280, Math.min(440, newY));
+                // Constrain observer to the canvas area, keeping them outside the main room wall
+                newX = Math.max(620, Math.min(canvas.width - 20, newX));
+                newY = Math.max(20, Math.min(canvas.height - 20, newY));
 
                 state.observer.x = newX;
                 state.observer.y = newY;
